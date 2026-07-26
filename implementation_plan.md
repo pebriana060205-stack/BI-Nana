@@ -4,6 +4,21 @@ Dokumen ini berisi spesifikasi perancangan database **OLTP** (untuk operasional 
 
 ---
 
+## 🎯 Top 5 BI Features
+
+Dokumen dan aplikasi Business Intelligence ini mengimplementasikan 5 fitur utama sesuai standar BI:
+
+| No | Fitur BI | Deskripsi Implementasi | Lokasi di Document / App |
+|---|---|---|---|
+| 1 | **Analysis Services** | Analisis RFM (Recency, Frequency, Monetary) untuk scoring & segmentasi nilai pelanggan | Section 4 & Page `/customers` |
+| 2 | **Integration Services** | Pipeline ETL (Extract, Transform, Load) untuk membaca CSV, validasi data, & logging | Section 5 & Page `/import` |
+| 3 | **Data Mining** | ABC Analysis (Pareto 80/20) revenue produk & Market Basket Analysis (Association Rules) | Section 4 & Page `/products` & `/mining` |
+| 4 | **Reporting Services** | Laporan bulanan, laporan per negara, dan MySQL Views analitik dengan fitur Export CSV | Section 4 & Page `/reports` |
+| 5 | **Clustering Support** | K-Means Clustering ($k=4$) untuk pengelompokan pelanggan (VIP, Regular, Dormant, One-Time) | Section 4 & Page `/clustering` |
+
+---
+
+
 ## User Review Required
 
 > [!IMPORTANT]
