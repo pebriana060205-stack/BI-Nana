@@ -1,6 +1,9 @@
 # Rencana Implementasi: Perancangan Database & Business Intelligence Online Retail
 
-Dokumen ini berisi spesifikasi perancangan database **OLTP** (untuk operasional website) dan **OLAP** (Star Schema untuk Business Intelligence), kamus data lengkap, pemetaan ETL, logika integrasi Data Mining/Clustering, serta rancangan antarmuka (wireframe) website yang akan dibuat.
+> **Kebutuhan Project (Prompt Request):**  
+> *"Buatkan Planning Perancangan Database dari data excel dalam project ini. Kemudian tambahkan pada perancangan tersebut untuk fitur ini: Analysis Services, Integration Services, Data Mining, Reporting Services, Clustering Support. Selain itu saya juga ingin memplanning dalam membuat aplikasi berbasis Website berdasarkan data tersebut. Namun saya memiliki skill di PHP dan MySQL. Berikan saran yang tepat."*
+
+Dokumen ini berisi spesifikasi perancangan database **OLTP** (untuk operasional website) dan **OLAP** (Star Schema untuk Business Intelligence), kamus data lengkap, pemetaan ETL, logika integrasi Data Mining/Clustering, serta rancangan antarmuka (wireframe) website yang akan dibuat menggunakan **PHP Native & MySQL**.
 
 ---
 
