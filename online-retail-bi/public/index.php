@@ -27,7 +27,7 @@ $protectedPages = [
     'dashboard', 'customers', 'customer-detail',
     'products', 'product-detail',
     'reports', 'mining', 'clustering',
-    'import'
+    'datamining', 'import'
 ];
 $allowedPages = array_merge($publicPages, $protectedPages);
 

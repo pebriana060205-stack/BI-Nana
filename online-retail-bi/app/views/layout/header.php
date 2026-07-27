@@ -8,27 +8,29 @@ $isLoggedIn  = isset($_SESSION['user']);
 $currentUser = $_SESSION['user'] ?? null;
 
 $navItems = [
-    ['id' => 'landing',    'icon' => '🏠', 'label' => 'Landing Page',       'section' => 'public'],
-    ['id' => 'dashboard',  'icon' => '📊', 'label' => 'Dashboard Utama',   'section' => 'main'],
-    ['id' => 'import',     'icon' => '📥', 'label' => 'Import Data CSV',   'section' => 'main'],
-    ['id' => 'customers',  'icon' => '👥', 'label' => 'Pelanggan & RFM',   'section' => 'analitik'],
-    ['id' => 'products',   'icon' => '📦', 'label' => 'Produk & ABC',      'section' => 'analitik'],
-    ['id' => 'clustering', 'icon' => '🔮', 'label' => 'Clustering',        'section' => 'analitik'],
-    ['id' => 'mining',     'icon' => '⛏️',  'label' => 'Market Basket',    'section' => 'analitik'],
-    ['id' => 'reports',    'icon' => '📋', 'label' => 'Laporan & Export',  'section' => 'laporan'],
+    ['id' => 'landing',     'icon' => '🏠',  'label' => 'Landing Page',       'section' => 'public'],
+    ['id' => 'dashboard',   'icon' => '📊',  'label' => 'Dashboard Utama',   'section' => 'main'],
+    ['id' => 'import',      'icon' => '📥',  'label' => 'Import Data CSV',   'section' => 'main'],
+    ['id' => 'customers',   'icon' => '👥',  'label' => 'Pelanggan & RFM',   'section' => 'analitik'],
+    ['id' => 'products',    'icon' => '📦',  'label' => 'Produk & ABC',      'section' => 'analitik'],
+    ['id' => 'clustering',  'icon' => '🔮',  'label' => 'Clustering',        'section' => 'analitik'],
+    ['id' => 'datamining',  'icon' => '🧠',  'label' => 'Data Mining',       'section' => 'analitik'],
+    ['id' => 'mining',      'icon' => '⛏️',  'label' => 'Market Basket',     'section' => 'analitik'],
+    ['id' => 'reports',     'icon' => '📋',  'label' => 'Laporan & Export',  'section' => 'laporan'],
 ];
 
 $pageTitles = [
-    'landing'    => ['title' => 'Landing Page',           'breadcrumb' => 'Business Intelligence Overview'],
-    'login'      => ['title' => 'Login System',           'breadcrumb' => 'Authentication'],
-    'register'   => ['title' => 'Registrasi Akun',        'breadcrumb' => 'Authentication'],
-    'dashboard'  => ['title' => 'Dashboard Utama',        'breadcrumb' => 'Overview & KPI'],
-    'import'     => ['title' => 'Import Data CSV',        'breadcrumb' => 'Integration Services → Upload CSV'],
-    'customers'  => ['title' => 'Analisis Pelanggan',     'breadcrumb' => 'Analysis Services → RFM Segmentation'],
+    'landing'    => ['title' => 'Landing Page',            'breadcrumb' => 'Business Intelligence Overview'],
+    'login'      => ['title' => 'Login System',            'breadcrumb' => 'Authentication'],
+    'register'   => ['title' => 'Registrasi Akun',         'breadcrumb' => 'Authentication'],
+    'dashboard'  => ['title' => 'Dashboard Utama',         'breadcrumb' => 'Overview & KPI'],
+    'import'     => ['title' => 'Import Data CSV',         'breadcrumb' => 'Integration Services → Upload CSV'],
+    'customers'  => ['title' => 'Analisis Pelanggan',      'breadcrumb' => 'Analysis Services → RFM Segmentation'],
     'products'   => ['title' => 'Analisis & CRUD Produk',  'breadcrumb' => 'Data Mining & Master Data Produk'],
-    'clustering' => ['title' => 'Customer Clustering',    'breadcrumb' => 'Clustering Support → K-Means'],
-    'mining'     => ['title' => 'Market Basket Analysis', 'breadcrumb' => 'Data Mining → Association Rules'],
-    'reports'    => ['title' => 'Laporan & Export',       'breadcrumb' => 'Reporting Services'],
+    'clustering' => ['title' => 'Customer Clustering',     'breadcrumb' => 'Clustering Support → K-Means (k=4)'],
+    'datamining' => ['title' => 'Data Mining Center',      'breadcrumb' => 'RFM · Pareto ABC · K-Means · Association Rules'],
+    'mining'     => ['title' => 'Market Basket Analysis',  'breadcrumb' => 'Data Mining → Association Rules'],
+    'reports'    => ['title' => 'Laporan & Export',        'breadcrumb' => 'Reporting Services'],
 ];
 
 $currentTitle = $pageTitles[$currentPage] ?? ['title' => 'BI Dashboard', 'breadcrumb' => ''];
