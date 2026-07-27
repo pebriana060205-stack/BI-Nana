@@ -14,7 +14,7 @@ $rfmSegments  = $db->query("
 
 $rfmSample = $db->query("
     SELECT r.customer_id, r.recency_days, r.frequency, r.monetary,
-           r.rfm_score, r.rfm_segment
+           CONCAT(r.r_score, r.f_score, r.m_score) AS rfm_score, r.rfm_segment
     FROM analytics_rfm r
     ORDER BY r.monetary DESC
     LIMIT 15
