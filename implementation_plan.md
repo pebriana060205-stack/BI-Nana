@@ -550,6 +550,85 @@ Tahap 9 - Polish & Security
 
 ---
 
+### 7. Detail Algoritma & Logika Matematika yang Digunakan
+
+Dokumen dan aplikasi ini menggunakan 4 algoritma analitik & matematika utama:
+
+#### A. Algoritma RFM Scoring (Analysis Services)
+Digunakan untuk mengevaluasi nilai dan tingkat retensi pelanggan berdasarkan transaksi historis:
+
+1. **Metrik Utama**:
+   - **Recency ($R$)**: Selisih hari antara tanggal terakhir transaksi pelanggan ($T_{\text{last}}$) dengan tanggal referensi akhir dataset ($T_{\text{ref}}$).
+     $$\text{Recency} = T_{\text{ref}} - T_{\text{last}}$$
+   - **Frequency ($F$)**: Jumlah total invoice unik milik pelanggan.
+     $$\text{Frequency} = \text{Count}(\text{DISTINCT invoice\_no})$$
+   - **Monetary ($M$)**: Akumulasi nilai nominal belanja pelanggan dalam Pound Sterling (£).
+     $$\text{Monetary} = \sum (\text{quantity} \times \text{unit\_price})$$
+
+2. **Scoring Kuantil (Quintile Method)**:
+   - Nilai $R$, $F$, dan $M$ diurutkan dan dibagi menjadi 5 kelompok (kuantil) berukuran sama untuk mendapatkan skor 1 sampai 5.
+   - Untuk **Recency**, skor 5 diberikan ke selisih hari **terecil** (paling baru).
+   - Untuk **Frequency** & **Monetary**, skor 5 diberikan ke nilai **terbesar**.
+
+3. **Aturan Segmen Pelanggan**:
+   - **Champions**: $R \ge 4, F \ge 4, M \ge 4$
+   - **Loyal Customers**: $F \ge 3, M \ge 3$
+   - **New Customers**: $R \ge 4, F \le 2$
+   - **At Risk**: $R \le 2, F \ge 3, M \ge 3$
+   - **Lost**: $R \le 2, F \le 2, M \le 2$
+
+---
+
+#### B. Algoritma Pareto ABC Analysis (Data Mining)
+Digunakan untuk mengklasifikasikan kontribusi pendapatan produk berdasarkan **Prinsip Pareto (80/20 Rule)**:
+
+1. Hitung total pendapatan ($\text{Revenue}_i$) untuk setiap produk $i$.
+2. Urutkan seluruh produk berdasarkan pendapatan secara menurun (*descending*).
+3. Hitung persentase kumulatif pendapatan:
+   $$\text{Cumulative}\% = \frac{\sum_{j=1}^{k} \text{Revenue}_j}{\sum_{all} \text{Revenue}} \times 100\%$$
+4. Tetapkan Kelas ABC:
+   - **Kelas A**: Produk dengan kumulatif pendapatan $\le 80\%$ (Produk paling krusial penopang omset).
+   - **Kelas B**: Produk dengan kumulatif pendapatan $80\% < x \le 95\%$ (Produk moderat).
+   - **Kelas C**: Produk dengan kumulatif pendapatan $> 95\%$ (Produk pelengkap).
+
+---
+
+#### C. Algoritma Market Basket Analysis / Apriori (Data Mining)
+Digunakan untuk menemukan aturan asosiasi (*Association Rules*) produk yang sering dibeli bersamaan dalam satu transaksi:
+
+1. **Support**: Mengukur seberapa sering gabungan produk A dan B muncul dalam seluruh transaksi.
+   $$\text{Support}(A \rightarrow B) = \frac{\text{Jumlah Transaksi Berisi }(A \cup B)}{\text{Total Seluruh Transaksi}}$$
+2. **Confidence**: Mengukur probabilitas produk B dibeli jika produk A dibeli.
+   $$\text{Confidence}(A \rightarrow B) = \frac{\text{Support}(A \cup B)}{\text{Support}(A)} = P(B|A)$$
+3. **Lift**: Mengukur kekuatan dan keabsahan aturan asosiasi.
+   $$\text{Lift}(A \rightarrow B) = \frac{\text{Confidence}(A \rightarrow B)}{\text{Support}(B)}$$
+   - Jika $\text{Lift} > 1$, asosiasi produk A dan B dinyatakan **signifikan dan kuat**.
+
+---
+
+#### D. Algoritma K-Means Clustering ($k=4$) (Clustering Support)
+Digunakan untuk mengelompokkan pelanggan secara otomatis berdasarkan fitur RFM tanpa perlu label awal (*Unsupervised Learning*):
+
+1. **Normalisasi Data (Min-Max Feature Scaling)**:
+   Mencegah dominasi variabel Monetary yang bernilai besar terhadap Recency/Frequency:
+   $$x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}$$
+
+2. **Perhitungan Jarak Euclidean (Euclidean Distance)**:
+   Menghitung jarak dari setiap objek pelanggan $p$ ke titik pusat klaster (*centroid*) $c$:
+   $$d(p, c) = \sqrt{(R'_p - R'_c)^2 + (F'_p - F'_c)^2 + (M'_p - M'_c)^2}$$
+
+3. **Pembaruan Centroid (Iteratif)**:
+   Centroid baru dihitung sebagai rata-rata titik pelanggan dalam klaster tersebut hingga posisi centroid stabil (konvergen):
+   $$\mu_j = \frac{1}{|C_j|} \sum_{x_i \in C_j} x_i$$
+
+4. **Label Klaster Hasil Akhir ($k=4$)**:
+   - **Cluster VIP**: High Monetary & High Frequency, Low Recency.
+   - **Cluster Regular**: Moderate Monetary & Frequency.
+   - **Cluster Dormant**: High Recency (Lama tidak bertransaksi).
+   - **Cluster One-Time**: Low Frequency & Monetary (Transaksi sekali).
+
+---
+
 ## Verification Plan
 
 ### Automated Tests
