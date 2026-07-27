@@ -116,15 +116,16 @@ Project Business Intelligence ini dibangun untuk menganalisis data transaksi e-c
 
 ## Database Design
 
-### OLTP Tables (MySQL 3NF Schema)
+### OLTP Tables (MySQL 3NF Schema & Status CRUD)
 
-| Tabel | Keterangan | Primary Key / Foreign Key |
-|-------|-----------|---------------------------|
-| `countries` | Master data negara & wilayah | `country_id` (PK) |
-| `customers` | Master data pelanggan | `customer_id` (PK), `country_id` (FK) |
-| `products` | Master data produk e-commerce | `stock_code` (PK) |
-| `transactions` | Header transaksi / invoice | `transaction_id` (PK), `customer_id` (FK), `country_id` (FK) |
-| `transaction_items` | Detail item barang per invoice | `item_id` (PK), `transaction_id` (FK), `stock_code` (FK) |
+| Tabel | Keterangan | Primary Key / Foreign Key | Status Operasi CRUD |
+|-------|-----------|---------------------------|---------------------|
+| `users` | Akun pengguna & administrator BI | `id` (PK) | **Create, Read, Update, Delete** (Login, Registrasi, User Session) |
+| `products` | Master data produk e-commerce | `stock_code` (PK) | **Create, Read, Update, Delete** (Form Modal CRUD Master Produk) |
+| `customers` | Master data pelanggan & RFM | `customer_id` (PK), `country_id` (FK) | **Create, Read, Update** (Kalkulasi RFM & Segmen Update) |
+| `transactions` | Header transaksi / invoice | `transaction_id` (PK), `customer_id` (FK), `country_id` (FK) | **Create, Read, Delete** (ETL Pipeline & Log Delete) |
+| `transaction_items` | Detail item barang per invoice | `item_id` (PK), `transaction_id` (FK), `stock_code` (FK) | **Create, Read** (ETL Bulk Insert Item) |
+| `countries` | Master data negara & wilayah | `country_id` (PK) | **Create, Read** (Lookup Master Country) |
 
 ### Tabel Pendukung Analytics & BI
 
