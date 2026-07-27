@@ -11,6 +11,7 @@ $navItems = [
     ['id' => 'landing',     'icon' => '🏠',  'label' => 'Landing Page',       'section' => 'public'],
     ['id' => 'dashboard',   'icon' => '📊',  'label' => 'Dashboard Utama',   'section' => 'main'],
     ['id' => 'import',      'icon' => '📥',  'label' => 'Import Data CSV',   'section' => 'main'],
+    ['id' => 'inputdata',   'icon' => '📝',  'label' => 'Input Data Manual', 'section' => 'main'],
     ['id' => 'customers',   'icon' => '👥',  'label' => 'Pelanggan & RFM',   'section' => 'analitik'],
     ['id' => 'products',    'icon' => '📦',  'label' => 'Produk & ABC',      'section' => 'analitik'],
     ['id' => 'clustering',  'icon' => '🔮',  'label' => 'Clustering',        'section' => 'analitik'],
@@ -29,6 +30,7 @@ $pageTitles = [
     'products'   => ['title' => 'Analisis & CRUD Produk',  'breadcrumb' => 'Data Mining & Master Data Produk'],
     'clustering' => ['title' => 'Customer Clustering',     'breadcrumb' => 'Clustering Support → K-Means (k=4)'],
     'datamining' => ['title' => 'Data Mining Center',      'breadcrumb' => 'RFM · Pareto ABC · K-Means · Association Rules'],
+    'inputdata'  => ['title' => 'Input Data Manual',        'breadcrumb' => 'Tambah Transaksi, Pelanggan & Produk Baru'],
     'mining'     => ['title' => 'Market Basket Analysis',  'breadcrumb' => 'Data Mining → Association Rules'],
     'reports'    => ['title' => 'Laporan & Export',        'breadcrumb' => 'Reporting Services'],
 ];
