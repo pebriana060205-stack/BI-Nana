@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  Dashboard View — KPI Cards + Charts
+//  Dashboard View — KPI Cards + 6 Charts (Complete BI Suite)
 // ============================================================
 
 $db = getDB();
@@ -50,6 +50,21 @@ $countryData = $db->query("
 $rfmSegments = $db->query("
     SELECT rfm_segment, COUNT(*) AS count FROM analytics_rfm
     GROUP BY rfm_segment ORDER BY count DESC
+")->fetchAll();
+
+// ---- ABC Class Distribution ----
+$abcSummary = $db->query("
+    SELECT abc_class, COUNT(*) as count, SUM(total_revenue) as rev
+    FROM mining_product_abc
+    GROUP BY abc_class ORDER BY abc_class
+")->fetchAll();
+
+// ---- Clustering Summary ----
+$clusterSummary = $db->query("
+    SELECT cluster_label, COUNT(*) as count, AVG(monetary) as avg_spend
+    FROM clustering_customer_groups c
+    JOIN analytics_rfm r ON c.customer_id = r.customer_id
+    GROUP BY cluster_label ORDER BY avg_spend DESC
 ")->fetchAll();
 
 // ---- ETL Log (last import) ----
@@ -113,13 +128,13 @@ function formatCurrency($val): string {
 </div>
 <?php else: ?>
 
-<!-- Charts Row 1: Revenue Trend + Country -->
+<!-- Row 1: Revenue Trend + Country -->
 <div class="chart-grid wide" style="margin-bottom: 24px;">
     <div class="panel">
         <div class="panel-header">
             <div>
                 <div class="panel-title">📈 Tren Revenue Bulanan</div>
-                <div class="panel-subtitle">Pendapatan total per bulan (bukan cancelled)</div>
+                <div class="panel-subtitle">Pendapatan total per bulan (Reporting Services)</div>
             </div>
             <span class="panel-badge">Reporting Services</span>
         </div>
@@ -134,7 +149,7 @@ function formatCurrency($val): string {
                 <div class="panel-title">🌍 Revenue per Negara</div>
                 <div class="panel-subtitle">Top 8 negara berdasarkan pendapatan</div>
             </div>
-            <span class="panel-badge">Analysis</span>
+            <span class="panel-badge">Geographic</span>
         </div>
         <div class="chart-container" style="height: 260px;">
             <canvas id="chartCountry"></canvas>
@@ -142,24 +157,21 @@ function formatCurrency($val): string {
     </div>
 </div>
 
-<!-- Charts Row 2: RFM Segments + Top Products -->
-<div class="chart-grid" style="margin-bottom: 24px;">
+<!-- Row 2: RFM Segments + Pareto ABC + K-Means Cluster -->
+<div class="chart-grid" style="margin-bottom: 24px; grid-template-columns: repeat(3, 1fr);">
     <div class="panel">
         <div class="panel-header">
             <div>
-                <div class="panel-title">🔍 Segmentasi RFM Pelanggan</div>
-                <div class="panel-subtitle">Distribusi pelanggan berdasarkan analisis RFM</div>
+                <div class="panel-title">🔍 Segmentasi RFM</div>
+                <div class="panel-subtitle">Analysis Services</div>
             </div>
-            <span class="panel-badge">Analysis Services</span>
         </div>
         <?php if (empty($rfmSegments)): ?>
-        <div class="empty-state" style="padding: 32px;">
-            <span class="empty-state-icon" style="font-size:2rem;">🔮</span>
-            <p>Jalankan kalkulasi RFM di halaman Pelanggan terlebih dahulu</p>
-            <a href="?page=customers" class="btn btn-secondary btn-sm" style="margin-top:12px;">Ke Halaman Pelanggan →</a>
+        <div class="empty-state" style="padding: 24px;">
+            <p>Jalankan kalkulasi RFM di menu Pelanggan</p>
         </div>
         <?php else: ?>
-        <div class="chart-container" style="height: 240px;">
+        <div class="chart-container" style="height: 230px;">
             <canvas id="chartRFM"></canvas>
         </div>
         <?php endif; ?>
@@ -168,35 +180,72 @@ function formatCurrency($val): string {
     <div class="panel">
         <div class="panel-header">
             <div>
-                <div class="panel-title">🏆 Top 10 Produk</div>
-                <div class="panel-subtitle">Berdasarkan total revenue</div>
+                <div class="panel-title">🅰️ Pareto ABC Class</div>
+                <div class="panel-subtitle">Data Mining Revenue</div>
             </div>
-            <span class="panel-badge">Data Mining</span>
         </div>
-        <div class="table-wrapper" style="max-height: 280px; overflow-y: auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Kode</th>
-                        <th>Produk</th>
-                        <th>Revenue</th>
-                        <th>Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($topProducts as $i => $p): ?>
-                    <tr>
-                        <td style="color: var(--text-muted);"><?= $i + 1 ?></td>
-                        <td><code style="font-size:.75rem;background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;"><?= htmlspecialchars($p['stock_code']) ?></code></td>
-                        <td style="font-size:.8rem; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><?= htmlspecialchars($p['description']) ?></td>
-                        <td style="color: var(--accent-teal); font-weight:600;"><?= formatCurrency($p['total_revenue']) ?></td>
-                        <td style="color: var(--text-muted);"><?= number_format($p['total_qty_terjual']) ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+        <?php if (empty($abcSummary)): ?>
+        <div class="empty-state" style="padding: 24px;">
+            <p>Jalankan ABC Analysis di menu Produk</p>
         </div>
+        <?php else: ?>
+        <div class="chart-container" style="height: 230px;">
+            <canvas id="chartABC"></canvas>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">🔮 K-Means Clusters</div>
+                <div class="panel-subtitle">Clustering Support</div>
+            </div>
+        </div>
+        <?php if (empty($clusterSummary)): ?>
+        <div class="empty-state" style="padding: 24px;">
+            <p>Jalankan K-Means di menu Clustering</p>
+        </div>
+        <?php else: ?>
+        <div class="chart-container" style="height: 230px;">
+            <canvas id="chartCluster"></canvas>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
+
+<!-- Row 3: Top 10 Products -->
+<div class="panel" style="margin-bottom: 24px;">
+    <div class="panel-header">
+        <div>
+            <div class="panel-title">🏆 Top 10 Produk Terbaik</div>
+            <div class="panel-subtitle">Berdasarkan akumulasi pendapatan dalam Pound Sterling</div>
+        </div>
+        <span class="panel-badge">Data Mining</span>
+    </div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Kode Produk</th>
+                    <th>Deskripsi Produk</th>
+                    <th>Total Revenue</th>
+                    <th>Jumlah Terjual</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($topProducts as $i => $p): ?>
+                <tr>
+                    <td style="color: var(--text-muted);"><?= $i + 1 ?></td>
+                    <td><code style="font-size:.78rem;background:rgba(255,255,255,.05);padding:3px 8px;border-radius:4px;"><?= htmlspecialchars($p['stock_code']) ?></code></td>
+                    <td style="font-size:.85rem;"><?= htmlspecialchars($p['description']) ?></td>
+                    <td style="color: var(--accent-teal); font-weight:600;"><?= formatCurrency($p['total_revenue']) ?></td>
+                    <td style="color: var(--text-muted);"><?= number_format($p['total_qty_terjual']) ?> item</td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -206,40 +255,29 @@ function formatCurrency($val): string {
 <?php if ($lastImport): ?>
 <div class="panel">
     <div class="panel-header">
-        <div class="panel-title">📥 Status Import Terakhir</div>
+        <div class="panel-title">📥 Status Integration Services (ETL Import)</div>
         <span class="badge <?= $lastImport['status'] === 'success' ? 'badge-regular' : 'badge-risk' ?>">
             <?= strtoupper($lastImport['status']) ?>
         </span>
     </div>
     <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
         <div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">FILE</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">FILE SUMBER</div>
             <div style="font-weight:600;font-size:.875rem;"><?= htmlspecialchars($lastImport['source_file']) ?></div>
         </div>
         <div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">TOTAL BARIS</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">TOTAL BARIS CSV</div>
             <div style="font-weight:600;"><?= number_format($lastImport['total_rows']) ?></div>
         </div>
         <div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">BERHASIL</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">BARIS BERHASIL</div>
             <div style="font-weight:600;color:var(--accent-emerald);"><?= number_format($lastImport['success_rows']) ?></div>
         </div>
         <div>
-            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">GAGAL</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:4px;">BARIS SKIPPED/GAGAL</div>
             <div style="font-weight:600;color:var(--accent-rose);"><?= number_format($lastImport['failed_rows']) ?></div>
         </div>
     </div>
-    <?php if ($lastImport['total_rows'] > 0): ?>
-    <div style="margin-top: 16px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:.75rem;color:var(--text-muted);">
-            <span>Progress Import</span>
-            <span><?= round($lastImport['success_rows'] / $lastImport['total_rows'] * 100, 1) ?>%</span>
-        </div>
-        <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width: <?= round($lastImport['success_rows'] / $lastImport['total_rows'] * 100, 1) ?>%"></div>
-        </div>
-    </div>
-    <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -252,7 +290,7 @@ const chartDefaults = {
 };
 
 <?php if (!empty($monthlyData)): ?>
-// --- Revenue Trend Chart ---
+// --- 1. Line Chart: Revenue Trend ---
 new Chart(document.getElementById('chartRevenueTrend'), {
     type: 'line',
     data: {
@@ -261,10 +299,10 @@ new Chart(document.getElementById('chartRevenueTrend'), {
             label: 'Revenue (£)',
             data: <?= json_encode(array_column($monthlyData, 'total_revenue')) ?>,
             borderColor: '#14b8a6',
-            backgroundColor: 'rgba(20,184,166,.1)',
+            backgroundColor: 'rgba(20,184,166,.12)',
             borderWidth: 2.5,
             fill: true,
-            tension: 0.4,
+            tension: 0.35,
             pointBackgroundColor: '#14b8a6',
             pointRadius: 3,
         }]
@@ -278,7 +316,7 @@ new Chart(document.getElementById('chartRevenueTrend'), {
     }
 });
 
-// --- Country Bar Chart ---
+// --- 2. Horizontal Bar Chart: Country Revenue ---
 new Chart(document.getElementById('chartCountry'), {
     type: 'bar',
     data: {
@@ -302,7 +340,7 @@ new Chart(document.getElementById('chartCountry'), {
 <?php endif; ?>
 
 <?php if (!empty($rfmSegments)): ?>
-// --- RFM Donut Chart ---
+// --- 3. Doughnut Chart: RFM Segments ---
 new Chart(document.getElementById('chartRFM'), {
     type: 'doughnut',
     data: {
@@ -311,14 +349,55 @@ new Chart(document.getElementById('chartRFM'), {
             data: <?= json_encode(array_column($rfmSegments, 'count')) ?>,
             backgroundColor: ['#14b8a6','#6366f1','#f59e0b','#f43f5e','#10b981','#8b5cf6','#3b82f6','#ec4899','#64748b'],
             borderColor: '#1e2535',
-            borderWidth: 3,
+            borderWidth: 2,
         }]
     },
     options: {
         ...chartDefaults,
-        cutout: '65%',
-        plugins: {
-            legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, padding: 12, boxWidth: 12 } }
+        cutout: '60%',
+        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, boxWidth: 10 } } }
+    }
+});
+<?php endif; ?>
+
+<?php if (!empty($abcSummary)): ?>
+// --- 4. Pie Chart: Pareto ABC ---
+new Chart(document.getElementById('chartABC'), {
+    type: 'pie',
+    data: {
+        labels: <?= json_encode(array_map(fn($r) => 'Kelas '.$r['abc_class'], $abcSummary)) ?>,
+        datasets: [{
+            data: <?= json_encode(array_column($abcSummary, 'count')) ?>,
+            backgroundColor: ['#14b8a6','#f59e0b','#64748b'],
+            borderColor: '#1e2535',
+            borderWidth: 2,
+        }]
+    },
+    options: {
+        ...chartDefaults,
+        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } } }
+    }
+});
+<?php endif; ?>
+
+<?php if (!empty($clusterSummary)): ?>
+// --- 5. Bar Chart: K-Means Clusters ---
+new Chart(document.getElementById('chartCluster'), {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode(array_column($clusterSummary, 'cluster_label')) ?>,
+        datasets: [{
+            label: 'Jumlah Pelanggan',
+            data: <?= json_encode(array_column($clusterSummary, 'count')) ?>,
+            backgroundColor: ['#8b5cf6','#14b8a6','#f43f5e','#f59e0b'],
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        ...chartDefaults,
+        scales: {
+            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+            y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,.04)' } }
         }
     }
 });
