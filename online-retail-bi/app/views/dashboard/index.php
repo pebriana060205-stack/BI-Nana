@@ -1,42 +1,9 @@
 <?php
 // ============================================================
-//  Dashboard View — KPI Cards + 5 Charts + Dashboard CRUD Panel
+//  Dashboard View — KPI Cards + 6 Charts (Complete BI Suite)
 // ============================================================
 
 $db = getDB();
-$dashAlert = null;
-
-// ---- POST Handler: CRUD Operations directly from Dashboard ----
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dash_crud_action'])) {
-    $action = $_POST['dash_crud_action'];
-    if ($action === 'create') {
-        $code = trim($_POST['stock_code'] ?? '');
-        $desc = trim($_POST['description'] ?? '');
-        $price = (float)($_POST['unit_price'] ?? 0);
-        $tier = $_POST['price_tier'] ?? 'Mid';
-
-        if (empty($code) || empty($desc)) {
-            $dashAlert = ['type' => 'error', 'msg' => 'Kode produk & deskripsi wajib diisi.'];
-        } else {
-            try {
-                $db->prepare("INSERT INTO products (stock_code, description, unit_price, price_tier) VALUES (?, ?, ?, ?)")
-                   ->execute([$code, $desc, $price, $tier]);
-                $dashAlert = ['type' => 'success', 'msg' => "Produk '$code' berhasil ditambahkan dari Dashboard!"];
-            } catch (PDOException $e) {
-                $dashAlert = ['type' => 'error', 'msg' => 'Gagal menambah produk: ' . $e->getMessage()];
-            }
-        }
-    } elseif ($action === 'delete') {
-        $code = trim($_POST['stock_code'] ?? '');
-        try {
-            $db->prepare("DELETE FROM mining_product_abc WHERE stock_code = ?")->execute([$code]);
-            $db->prepare("DELETE FROM products WHERE stock_code = ?")->execute([$code]);
-            $dashAlert = ['type' => 'success', 'msg' => "Produk '$code' berhasil dihapus dari Dashboard!"];
-        } catch (PDOException $e) {
-            $dashAlert = ['type' => 'error', 'msg' => 'Gagal menghapus produk: ' . $e->getMessage()];
-        }
-    }
-}
 
 // ---- KPI Queries ----
 $totalRevenue = $db->query("
@@ -112,37 +79,6 @@ function formatCurrency($val): string {
     return '£' . number_format($val, 2);
 }
 ?>
-
-<!-- Alert Dashboard CRUD -->
-<?php if ($dashAlert): ?>
-<div class="alert alert-<?= $dashAlert['type'] === 'success' ? 'success' : 'error' ?>" style="margin-bottom: 24px;">
-    <?= $dashAlert['type'] === 'success' ? '✅' : '❌' ?> <?= htmlspecialchars($dashAlert['msg']) ?>
-</div>
-<?php endif; ?>
-
-<!-- Quick Dashboard CRUD Actions Panel -->
-<div class="panel" style="margin-bottom: 24px; background: rgba(30, 37, 53, 0.6); border-color: rgba(20,184,166,0.3);">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <div>
-            <div class="panel-title" style="font-size: 1.1rem;">⚡ Control Panel CRUD & Operasi Cepat</div>
-            <div class="panel-subtitle">Kelola master data produk dan akses fitur BI langsung dari Dashboard</div>
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button type="button" class="btn btn-primary" onclick="openDashModal()">
-                ➕ Tambah Produk (CRUD)
-            </button>
-            <a href="?page=products" class="btn btn-secondary">
-                📦 Master Produk Full →
-            </a>
-            <a href="?page=customers" class="btn btn-secondary">
-                👥 Kelola Pelanggan →
-            </a>
-            <a href="?page=import" class="btn btn-secondary">
-                📥 Import CSV →
-            </a>
-        </div>
-    </div>
-</div>
 
 <!-- KPI Cards -->
 <div class="kpi-grid">
@@ -278,14 +214,14 @@ function formatCurrency($val): string {
     </div>
 </div>
 
-<!-- Row 3: Top 10 Products with Quick CRUD Actions -->
+<!-- Row 3: Top 10 Products -->
 <div class="panel" style="margin-bottom: 24px;">
     <div class="panel-header">
         <div>
-            <div class="panel-title">🏆 Top 10 Produk Terbaik & Aksi CRUD</div>
-            <div class="panel-subtitle">Daftar produk dengan pendapatan tertinggi & opsi hapus cepat</div>
+            <div class="panel-title">🏆 Top 10 Produk Terbaik</div>
+            <div class="panel-subtitle">Berdasarkan akumulasi pendapatan dalam Pound Sterling</div>
         </div>
-        <span class="panel-badge">Data Mining + CRUD</span>
+        <span class="panel-badge">Data Mining</span>
     </div>
     <div class="table-wrapper">
         <table>
@@ -296,7 +232,6 @@ function formatCurrency($val): string {
                     <th>Deskripsi Produk</th>
                     <th>Total Revenue</th>
                     <th>Jumlah Terjual</th>
-                    <th>Aksi CRUD</th>
                 </tr>
             </thead>
             <tbody>
@@ -307,15 +242,6 @@ function formatCurrency($val): string {
                     <td style="font-size:.85rem;"><?= htmlspecialchars($p['description']) ?></td>
                     <td style="color: var(--accent-teal); font-weight:600;"><?= formatCurrency($p['total_revenue']) ?></td>
                     <td style="color: var(--text-muted);"><?= number_format($p['total_qty_terjual']) ?> item</td>
-                    <td>
-                        <form method="POST" onsubmit="return confirm('Hapus produk ini dari database?');" style="display:inline;">
-                            <input type="hidden" name="dash_crud_action" value="delete">
-                            <input type="hidden" name="stock_code" value="<?= htmlspecialchars($p['stock_code'], ENT_QUOTES) ?>">
-                            <button type="submit" class="btn btn-sm btn-danger" style="background:rgba(244,63,94,.15);color:var(--accent-rose);border:1px solid rgba(244,63,94,.3);">
-                                🗑️ Hapus
-                            </button>
-                        </form>
-                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -355,56 +281,208 @@ function formatCurrency($val): string {
 </div>
 <?php endif; ?>
 
-<!-- Dashboard CRUD Modal (Create Product) -->
-<div id="dashModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center;">
-    <div class="panel" style="width:100%; max-width:460px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:12px; padding:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-            <h3 style="margin:0; font-size:1.1rem; color:var(--text-primary);">➕ Tambah Produk dari Dashboard</h3>
-            <button type="button" onclick="closeDashModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">✖</button>
+<!-- ==================== CRUD DATABASE TABLE PANEL ==================== -->
+<div class="panel" style="margin-bottom: 24px;">
+    <div class="panel-header">
+        <div>
+            <div class="panel-title">🗄️ Database Design — OLTP Tables & Status CRUD</div>
+            <div class="panel-subtitle">Pemetaan operasi Create, Read, Update, Delete per tabel MySQL</div>
         </div>
-        <form method="POST">
-            <input type="hidden" name="dash_crud_action" value="create">
-            
-            <div style="margin-bottom:14px;">
-                <label style="display:block; font-size:.8rem; color:var(--text-muted); margin-bottom:6px;">Kode Produk (StockCode)</label>
-                <input type="text" name="stock_code" required style="width:100%; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:.875rem;">
-            </div>
-            
-            <div style="margin-bottom:14px;">
-                <label style="display:block; font-size:.8rem; color:var(--text-muted); margin-bottom:6px;">Deskripsi Produk</label>
-                <input type="text" name="description" required style="width:100%; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:.875rem;">
-            </div>
+        <span class="panel-badge" style="background: rgba(99,102,241,.15); color:#818cf8; border-color:rgba(99,102,241,.25);">MySQL 3NF Schema</span>
+    </div>
+    <div class="table-wrapper">
+        <table id="crudTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tabel Database</th>
+                    <th>Keterangan</th>
+                    <th>Primary Key / Foreign Key</th>
+                    <th style="text-align:center;">Create</th>
+                    <th style="text-align:center;">Read</th>
+                    <th style="text-align:center;">Update</th>
+                    <th style="text-align:center;">Delete</th>
+                    <th>Aksi / Menu</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                $crudTables = [
+                    [
+                        'table'   => 'users',
+                        'desc'    => 'Akun pengguna & administrator BI',
+                        'keys'    => 'id (PK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => true,
+                        'context' => 'Login, Registrasi, User Session',
+                        'page'    => null,
+                    ],
+                    [
+                        'table'   => 'products',
+                        'desc'    => 'Master data produk e-commerce',
+                        'keys'    => 'stock_code (PK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => true,
+                        'context' => 'Form Modal CRUD Master Produk',
+                        'page'    => 'products',
+                    ],
+                    [
+                        'table'   => 'customers',
+                        'desc'    => 'Master data pelanggan & RFM Segmentation',
+                        'keys'    => 'customer_id (PK), country_id (FK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => false,
+                        'context' => 'Kalkulasi RFM & Segmen Update',
+                        'page'    => 'customers',
+                    ],
+                    [
+                        'table'   => 'transactions',
+                        'desc'    => 'Header transaksi / invoice penjualan',
+                        'keys'    => 'transaction_id (PK), customer_id (FK), country_id (FK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => false,
+                        'delete'  => true,
+                        'context' => 'ETL Pipeline & Cancel Invoice',
+                        'page'    => 'reports',
+                    ],
+                    [
+                        'table'   => 'transaction_items',
+                        'desc'    => 'Detail item barang per invoice',
+                        'keys'    => 'item_id (PK), transaction_id (FK), stock_code (FK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => false,
+                        'delete'  => false,
+                        'context' => 'ETL Bulk Insert Line Item',
+                        'page'    => 'reports',
+                    ],
+                    [
+                        'table'   => 'countries',
+                        'desc'    => 'Master data negara & wilayah penjualan',
+                        'keys'    => 'country_id (PK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => false,
+                        'delete'  => false,
+                        'context' => 'Lookup Master Country',
+                        'page'    => null,
+                    ],
+                    [
+                        'table'   => 'analytics_rfm',
+                        'desc'    => 'Skor RFM & Segmen pelanggan (Analysis Services)',
+                        'keys'    => 'customer_id (PK/FK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => false,
+                        'context' => 'Re-kalkulasi Recency, Frequency, Monetary',
+                        'page'    => 'customers',
+                    ],
+                    [
+                        'table'   => 'mining_product_abc',
+                        'desc'    => 'Klasifikasi Pareto ABC per produk (Data Mining)',
+                        'keys'    => 'stock_code (PK/FK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => false,
+                        'context' => 'Re-kalkulasi ABC Class (A/B/C)',
+                        'page'    => 'products',
+                    ],
+                    [
+                        'table'   => 'clustering_customer_groups',
+                        'desc'    => 'Penugasan K-Means Cluster pelanggan',
+                        'keys'    => 'customer_id (PK/FK), cluster_id',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => true,
+                        'delete'  => false,
+                        'context' => 'K-Means Recalculation (k=4)',
+                        'page'    => 'clustering',
+                    ],
+                    [
+                        'table'   => 'mining_association_rules',
+                        'desc'    => 'Association Rules Market Basket Analysis',
+                        'keys'    => 'rule_id (PK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => false,
+                        'delete'  => true,
+                        'context' => 'Apriori / Support-Confidence-Lift',
+                        'page'    => 'mining',
+                    ],
+                    [
+                        'table'   => 'etl_log',
+                        'desc'    => 'History eksekusi import CSV (Integration Services)',
+                        'keys'    => 'log_id (PK)',
+                        'create'  => true,
+                        'read'    => true,
+                        'update'  => false,
+                        'delete'  => false,
+                        'context' => 'Audit trail tiap proses ETL',
+                        'page'    => 'import',
+                    ],
+                ];
 
-            <div style="margin-bottom:14px;">
-                <label style="display:block; font-size:.8rem; color:var(--text-muted); margin-bottom:6px;">Harga Satuan (£)</label>
-                <input type="number" step="0.01" name="unit_price" required style="width:100%; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:.875rem;">
-            </div>
+                $badge = fn($on) => $on
+                    ? '<span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:rgba(16,185,129,.18);color:#10b981;font-size:.85rem;">✓</span>'
+                    : '<span style="display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;border-radius:50%;background:rgba(100,116,139,.12);color:#475569;font-size:.75rem;">—</span>';
 
-            <div style="margin-bottom:20px;">
-                <label style="display:block; font-size:.8rem; color:var(--text-muted); margin-bottom:6px;">Tier Harga</label>
-                <select name="price_tier" style="width:100%; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-color); color:var(--text-primary); border-radius:6px; font-size:.875rem;">
-                    <option value="Low">Low (< £2)</option>
-                    <option value="Mid" selected>Mid (£2 - £10)</option>
-                    <option value="Premium">Premium (> £10)</option>
-                </select>
-            </div>
+                foreach ($crudTables as $i => $t):
+                    $cntOn = (int)$t['create'] + (int)$t['read'] + (int)$t['update'] + (int)$t['delete'];
+                    $fullCrud = $cntOn === 4;
+                    $rowAccent = $fullCrud ? 'rgba(99,102,241,.06)' : 'transparent';
+                ?>
+                <tr style="background:<?= $rowAccent ?>">
+                    <td style="color:var(--text-muted);font-size:.8rem;"><?= $i + 1 ?></td>
+                    <td>
+                        <code style="font-size:.78rem;background:rgba(255,255,255,.05);padding:3px 8px;border-radius:4px;color:<?= $fullCrud ? '#818cf8' : '#94a3b8' ?>">
+                            <?= htmlspecialchars($t['table']) ?>
+                        </code>
+                        <?php if ($fullCrud): ?>
+                        <span style="margin-left:6px;font-size:.65rem;background:rgba(99,102,241,.2);color:#818cf8;padding:1px 6px;border-radius:10px;vertical-align:middle;">FULL CRUD</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="font-size:.83rem;color:var(--text-secondary);"><?= htmlspecialchars($t['desc']) ?></td>
+                    <td style="font-size:.75rem;color:var(--text-muted);font-family:monospace;"><?= htmlspecialchars($t['keys']) ?></td>
+                    <td style="text-align:center;"><?= $badge($t['create']) ?></td>
+                    <td style="text-align:center;"><?= $badge($t['read']) ?></td>
+                    <td style="text-align:center;"><?= $badge($t['update']) ?></td>
+                    <td style="text-align:center;"><?= $badge($t['delete']) ?></td>
+                    <td>
+                        <?php if ($t['page']): ?>
+                        <a href="?page=<?= $t['page'] ?>" class="btn btn-sm btn-secondary" style="font-size:.72rem;padding:3px 10px;">
+                            Kelola →
+                        </a>
+                        <?php else: ?>
+                        <span style="font-size:.72rem;color:var(--text-muted);"><?= htmlspecialchars($t['context']) ?></span>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="closeDashModal()" class="btn btn-secondary">Batal</button>
-                <button type="submit" class="btn btn-primary">Simpan ke Database</button>
-            </div>
-        </form>
+    <!-- CRUD Legend -->
+    <div style="display:flex;gap:20px;align-items:center;padding:12px 0 0;flex-wrap:wrap;">
+        <span style="font-size:.72rem;color:var(--text-muted);">Legenda:</span>
+        <span style="font-size:.78rem;color:#10b981;">✓ Didukung</span>
+        <span style="font-size:.78rem;color:#475569;">— Tidak tersedia</span>
+        <span style="font-size:.78rem;color:#818cf8;">■ FULL CRUD = semua 4 operasi aktif</span>
+        <span style="margin-left:auto;font-size:.72rem;color:var(--text-muted);">Total: <?= count($crudTables) ?> tabel terdaftar</span>
     </div>
 </div>
 
+<!-- Chart.js Scripts -->
 <script>
-function openDashModal() {
-    $('#dashModal').css('display', 'flex');
-}
-function closeDashModal() {
-    $('#dashModal').css('display', 'none');
-}
-
 const chartDefaults = {
     responsive: true,
     maintainAspectRatio: false,
