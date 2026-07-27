@@ -13,10 +13,11 @@ $rfmSegments  = $db->query("
 ")->fetchAll();
 
 $rfmSample = $db->query("
-    SELECT r.customer_id, r.recency_days, r.frequency, r.monetary,
-           CONCAT(r.r_score, r.f_score, r.m_score) AS rfm_score, r.rfm_segment
-    FROM analytics_rfm r
-    ORDER BY r.monetary DESC
+    SELECT customer_id, recency_days, frequency, monetary,
+           CONCAT(r_score, f_score, m_score) AS rfm_score,
+           rfm_segment
+    FROM analytics_rfm
+    ORDER BY monetary DESC
     LIMIT 15
 ")->fetchAll();
 
@@ -25,12 +26,12 @@ $abcTotal   = (int) $db->query("SELECT COUNT(*) FROM mining_product_abc")->fetch
 $abcSummary = $db->query("
     SELECT abc_class, COUNT(*) AS cnt,
            SUM(total_revenue) AS total_rev,
-           ROUND(SUM(cumulative_pct),2) AS avg_cum_pct
+           ROUND(MAX(cumulative_pct),2) AS max_cum_pct
     FROM mining_product_abc GROUP BY abc_class ORDER BY abc_class
 ")->fetchAll();
 
 $abcSample = $db->query("
-    SELECT stock_code, description, total_revenue, total_qty, abc_class
+    SELECT stock_code, description, total_revenue, abc_class
     FROM mining_product_abc ORDER BY total_revenue DESC LIMIT 15
 ")->fetchAll();
 
@@ -38,8 +39,8 @@ $abcSample = $db->query("
 $clusterTotal   = (int) $db->query("SELECT COUNT(*) FROM clustering_customer_groups")->fetchColumn();
 $clusterSummary = $db->query("
     SELECT cluster_id, cluster_label, COUNT(*) AS cnt,
-           ROUND(AVG(avg_monetary),2) AS avg_monetary,
-           ROUND(AVG(avg_frequency),2) AS avg_frequency
+           ROUND(AVG(centroid_m), 2) AS avg_monetary,
+           ROUND(AVG(centroid_f), 2) AS avg_frequency
     FROM clustering_customer_groups
     GROUP BY cluster_id, cluster_label ORDER BY cluster_id
 ")->fetchAll();
@@ -202,11 +203,11 @@ function fmtM($val) {
                 ?>
                 <tr>
                     <td style="color:var(--text-muted);"><?= $i+1 ?></td>
-                    <td><code style="font-size:.78rem;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:4px;"><?= htmlspecialchars($r['customer_id']) ?></code></td>
+                    <td><code style="font-size:.78rem;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:4px;"><?= htmlspecialchars($r['customer_id'] ?? '-') ?></code></td>
                     <td style="color:#f59e0b;"><?= number_format($r['recency_days']) ?> hari</td>
                     <td><?= number_format($r['frequency']) ?>×</td>
                     <td style="color:#14b8a6;font-weight:600;"><?= fmtM($r['monetary']) ?></td>
-                    <td style="font-weight:700;color:#818cf8;"><?= htmlspecialchars($r['rfm_score']) ?></td>
+                    <td style="font-weight:700;color:#818cf8;letter-spacing:.05em;"><?= htmlspecialchars($r['rfm_score'] ?? '-') ?></td>
                     <td><span style="background:<?= $segColor ?>22;color:<?= $segColor ?>;border:1px solid <?= $segColor ?>44;border-radius:20px;padding:2px 10px;font-size:.72rem;font-weight:600;"><?= htmlspecialchars($seg) ?></span></td>
                 </tr>
                 <?php endforeach; ?>
@@ -273,7 +274,7 @@ function fmtM($val) {
             <table id="abcTable">
                 <thead><tr>
                     <th>#</th><th>Kode Produk</th><th>Deskripsi</th>
-                    <th>Total Revenue</th><th>Total Qty</th><th>Kelas ABC</th>
+                    <th>Total Revenue</th><th>Kelas ABC</th>
                 </tr></thead>
                 <tbody>
                 <?php foreach ($abcSample as $i => $p):
@@ -285,7 +286,6 @@ function fmtM($val) {
                     <td><code style="font-size:.78rem;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:4px;"><?= htmlspecialchars($p['stock_code']) ?></code></td>
                     <td style="font-size:.83rem;"><?= htmlspecialchars($p['description']) ?></td>
                     <td style="color:#14b8a6;font-weight:600;"><?= fmtM($p['total_revenue']) ?></td>
-                    <td style="color:var(--text-muted);"><?= number_format($p['total_qty']) ?></td>
                     <td><span style="background:<?= $color ?>22;color:<?= $color ?>;border:1px solid <?= $color ?>44;border-radius:20px;padding:2px 14px;font-size:.8rem;font-weight:800;">Kelas <?= $cls ?></span></td>
                 </tr>
                 <?php endforeach; ?>
