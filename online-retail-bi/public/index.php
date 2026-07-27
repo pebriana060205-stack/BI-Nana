@@ -1,10 +1,6 @@
 <?php
 // ============================================================
-//  Entry Point — Router Aplikasi
-//  URL: index.php?page=dashboard
-//       index.php?page=customers
-//       index.php?page=import
-//       dll.
+//  Entry Point — Router Aplikasi & Auth Protection
 // ============================================================
 
 session_start();
@@ -14,17 +10,35 @@ define('BASE_URL', (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SER
 
 require_once BASE_PATH . '/config/database.php';
 
-// Routing sederhana
-$page = $_GET['page'] ?? 'dashboard';
-$allowedPages = [
+// Route handler
+$page = $_GET['page'] ?? 'landing';
+
+// Handle Logout Action
+if ($page === 'logout') {
+    unset($_SESSION['user']);
+    session_destroy();
+    header('Location: ?page=landing');
+    exit;
+}
+
+// Allowed Pages Definition
+$publicPages = ['landing', 'login', 'register', 'api'];
+$protectedPages = [
     'dashboard', 'customers', 'customer-detail',
     'products', 'product-detail',
     'reports', 'mining', 'clustering',
-    'import', 'api'
+    'import'
 ];
+$allowedPages = array_merge($publicPages, $protectedPages);
 
 if (!in_array($page, $allowedPages)) {
-    $page = 'dashboard';
+    $page = 'landing';
+}
+
+// Redirect unauthenticated users trying to access protected pages to Login
+if (in_array($page, $protectedPages) && !isset($_SESSION['user'])) {
+    header('Location: ?page=login');
+    exit;
 }
 
 // Handle API requests (AJAX)
@@ -35,17 +49,22 @@ if ($page === 'api') {
     exit;
 }
 
-// Render halaman
+// Render Header & Layout
 require_once BASE_PATH . '/app/views/layout/header.php';
 
-$viewFile = BASE_PATH . '/app/views/' . $page . '/index.php';
-
-// Handle halaman detail
-if ($page === 'customer-detail' && isset($_GET['id'])) {
+// Determine View File Location
+if ($page === 'landing') {
+    $viewFile = BASE_PATH . '/app/views/landing/index.php';
+} elseif ($page === 'login') {
+    $viewFile = BASE_PATH . '/app/views/auth/login.php';
+} elseif ($page === 'register') {
+    $viewFile = BASE_PATH . '/app/views/auth/register.php';
+} elseif ($page === 'customer-detail' && isset($_GET['id'])) {
     $viewFile = BASE_PATH . '/app/views/customers/detail.php';
-}
-if ($page === 'product-detail' && isset($_GET['id'])) {
+} elseif ($page === 'product-detail' && isset($_GET['id'])) {
     $viewFile = BASE_PATH . '/app/views/products/detail.php';
+} else {
+    $viewFile = BASE_PATH . '/app/views/' . $page . '/index.php';
 }
 
 if (file_exists($viewFile)) {
